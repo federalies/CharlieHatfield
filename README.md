@@ -1,5 +1,5 @@
 # Charlie Hatfield
-> C.Hatfield was not a rain maker. He was a "moisture accelerator"
+> C.Hatfield is a maker of clouds (well... at least cloud components)
 
 <!-- 
 ![banner]()
@@ -9,10 +9,9 @@
 [![license](https://img.shields.io/github/license/federalies/CharlieHatfield.svg)](LICENSE)
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
-> `Charlie Hatfield` is a code-generation project that creates squals file out of thin air (or accelerated via a local file from your disk)
+> `Charlie Hatfield` is a code-generation project that creates squals files out of thin air, and drops them on your disk.
 
-Charlie Hatfield is a command line tool that generates stubbed out typescript classes based on cloudTypeId - so far only AWS types have been implemented yet, but the goal is to create Azure and GCloud class too so that as much as reasonable squals components can be qucikly generated and kept up to data based on dependent interfaces published via the cloud providers.
-
+`Charlie Hatfield` is a command line tool that generates stubbed out typescript classes based on published `cloudTypeId`s (so far only AWS types have been implemented - however the goal is to create Azure and GCloud verssions too) so that as much as reasonable squals components can be qucikly generated for new cloud primatives that and kept upto date based on the dependent interfaces published via the cloud providers.
 
 ## Table of Contents
 
