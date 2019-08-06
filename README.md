@@ -66,4 +66,4 @@ PRs accepted.
 
 ## License
 
-[MIT © Richard McRichface.](../LICENSE)
+[MIT © Eric Moore.](../LICENSE)
