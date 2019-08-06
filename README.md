@@ -1,17 +1,17 @@
 # Charlie Hatfield
 > C.Hatfield was not a rain maker. He was a "moisture accelerator"
 
+<!-- 
 ![banner]()
-
 ![badge]()
 ![badge]()
+--> 
 [![license](https://img.shields.io/github/license/federalies/CharlieHatfield.svg)](LICENSE)
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
 > `Charlie Hatfield` is a code-generation project that creates squals file out of thin air (or accelerated via a local file from your disk)
 
-
-Charlie Hatfield is a command line tool that 
+Charlie Hatfield is a command line tool that generates stubbed out typescript classes based on cloudTypeId - so far only AWS types have been implemented yet, but the goal is to create Azure and GCloud class too so that as much as reasonable squals components can be qucikly generated and kept up to data based on dependent interfaces published via the cloud providers.
 
 
 ## Table of Contents
@@ -35,30 +35,25 @@ The Squals project is a collection of TypeScript/Javascript es6 classes that cre
 
 ...npm package coming soon.
 
-
-### Any optional sections
-
 ## Usage
 
 `npx ts-node src/cli.ts -i src/.config.squals.ts`
 
-
-Note: The `license` badge image link at the top of this file should be updated with the correct `:user` and `:repo`.
-
-### Any optional sections
-
 ## API
 
-### Any optional sections
+### CLI
 
-## More optional sections
+#### gen
+
+### Config File
+
+### configList
 
 ## Project Name
 
 This project owes it name to the great work of Nate DiMeo who makes [The Memory Palace](http://thememorypalace.us/2015/07/charlie-god-of-rain/) podcast. 
 
 Episode 69 (from 2015) is an ode to the wonder of the steam punked attempts of mere men to make rain drops form in the clouds. Charlie Hatfield was before his time, little did he know that over a century later people would be interested in sewing their own clouds together in hopes of "making it rain" (but dollars, not dew drops)
-
 
 ## Contributing
 
