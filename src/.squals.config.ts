@@ -11,7 +11,7 @@ export default {
     { typesPrefix: ['AWS::AppSync::'] },
     { typesPrefix: [{ 'AWS::Lambda::': { path: '/lambda' } }] }
   ]
-}
+} as ISqualsDeaultExport
 
 // OLD IDEAS
 // OLD IDEAS
@@ -32,8 +32,8 @@ export const useSchema = {
 
 // #region interfaces
 
-export interface ISqualsConfig {
-  outpath: string
+export interface ISqualsDeaultExport {
+  outpath?: string
   configList: ISqualsConfigList
 }
 
@@ -48,7 +48,7 @@ export interface ISqualsElements {
 }
 
 export interface ISqualsShortHand {
-  awsTypesPrefix: string[]
+  typesPrefix: string[]
 }
 
 // #endregion interfaces
