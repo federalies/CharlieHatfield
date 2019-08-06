@@ -75,12 +75,10 @@ export class SqualsFile {
       this.sections._methodObjs = {
          'constructor':{
             name:'constructor',
-            modifiers:[''],
-            args:[{alias:'', type:''}],
-            body:`this.name = genComponentName()
+            body:`
+            this.name = genComponentName()
             this.Properties = {}
             // finish the constructor`,
-            returns:"",
          },
          'fromString':{
             name:'fromString',
@@ -98,19 +96,19 @@ export class SqualsFile {
             name:'fromJS',
             modifiers:['static'],
             args:[{alias:'i', type:'object'}],
-            returns:`return ${this.Class}.validateJS(i as I${this.Class}_min )`
+            returns:` ${this.Class}.validateJS(i as I${this.Class}_min )`
          },
          'from':{
             name:'from',
             modifiers:['static'],
             args:[{alias:'i', type:'string | object'}],
-            returns:`return ${this.Class}.validate(i)`
+            returns:` ${this.Class}.validate(i)`
          },
          'validate':{
             name:'validate',
             modifiers:['static'],
             args:[{alias:'i', type:'string | object'}],
-            returns:`return validatorGeneric<${this.Class}>(i)`
+            returns:` validatorGeneric<${this.Class}>(i)`
          },
          'validateJS':{
             name:'validateJS',
@@ -127,11 +125,12 @@ export class SqualsFile {
          '_name':{
             name:'_name',
             args:[{alias:'s', type:'string'}],
-            returns:`${this.Class}.validate(JSON.parse(s))`
+            body:'this.name = s',
+            returns:`this`
          },
          'toJSON':{
             name:'toJSON',
-            returns:`return {[this.name]:{
+            returns:` {[this.name]:{
                Type:${this.sections._attributes.Type},
                Properties: this.Properties
            }}`
@@ -314,23 +313,23 @@ export class SqualsFile {
       return this
    }
 
-   toStringMethod(name:string, data:Imethod_Elements){
+   methods_toString(name:string, data:Imethod_Elements){
       const d = {
          name: data.name,
          docString: data.docString ? data.docString  : '',
          modifiers: data.modifiers ? data.modifiers : [],
          args: data.args ? data.args : [],
          body: data.body ? data.body : '',
-         returns: data.body ? data.body : '',
+         returns: data.returns ? data.returns : '',
       }
          
       const _args = d.args.map(v=>`${v.alias}: ${v.type}`)
       
       let ret  = `${d.docString}
-      ${d.modifiers.join(' ')} ${d.name} ( ${_args} ) { 
+      ${d.modifiers.join(' ')} ${d.name} ( ${d.args.length>0 ? _args : ''} ) { 
          ${d.body}`
 
-      ret += d.returns.length>0 ? `return ${d.returns} \n}\n` : '\n}\n'
+      ret += d.returns.length>0 ? `\n return ${d.returns} \n } \n` : '\n } \n'
       return ret
    }
    
@@ -339,12 +338,14 @@ export class SqualsFile {
       ${this.sections._imports.join('\n')}
       class ${this.Class} implements ${this.ClassExts.implements.join(', ')} {
          ${this._attibutesToString(this.sections._attributes)}
-         ${Object.entries(this.sections._methodObjs).map(([n,d])=>this.toStringMethod(n,d))}
+         ${Object.entries(this.sections._methodObjs)
+            .map(([n,d])=>this.methods_toString(n,d))
+            .join('\n')}
       }
       //# region interfaces
       ${this.sections._interfaces._min.replace(/"/g,'')}
-      ${this.sections._interfaces._json.replace(/"/g,'')}
       ${this.sections._interfaces._props.replace(/"/g,'')}
+      ${this.sections._interfaces._json.replace(/"/g,'')}
       //# endregion interfaces
 
       `
@@ -475,7 +476,7 @@ export class SqualsFile {
                return {
                   ...{[`${AttrName}`]:{
                      name: AttrName,
-                     returns: `return {'Fn::GetAtt':[this.name, '${AttrName}']}`
+                     returns: `{'Fn::GetAtt':[this.name, '${AttrName}']} `
                   }},
                   ...p
                }

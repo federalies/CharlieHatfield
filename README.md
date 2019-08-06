@@ -6,17 +6,17 @@
 
 [![license](https://img.shields.io/github/license/federalies/CharlieHatfield.svg)](LICENSE) [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme) <!-- ![badge]() ![badge]() -->
 
-> Charlie Hatfield is a code-generation project that creates [squals files](//github.com/federalies/squals) out of thin air, and rains them down on your file system.
+> Charlie Hatfield is a code-generation project that creates [squal files](//github.com/federalies/squals) out of thin air, and rains them down on your file system.
 
 ## Charlie Hatfield
 
-`Charlie Hatfield` is a command line tool that generates typescript [squals](//github.com/federalies/squals) classes based on published data from various cloud providers. (So far only AWS codeGeneration has been implemented; however, the goal is to create Azure and GCloud versions too) As much as reasonable, Charlie Hatfiel aims to help users stay up-to-date with squals files for new cloud primatives and also be kept up-to-date based on the interfaces published via the cloud providers that we are dependent on.
+`Charlie Hatfield` is a command line tool that generates typescript [squal](//github.com/federalies/squals) classes based on published data from various cloud providers. (So far only AWS codeGeneration has been implemented; however, the goal is to create Azure and GCloud versions too) As much as reasonable, Charlie Hatfiel aims to help users stay up-to-date with squal files for new cloud primatives and also be kept up-to-date based on the interfaces published via the cloud providers that we are dependent on.
 
 `Charlie Hatfield` exists because there are so many cloud components available from AWS alone, the idea of making them "by hand" while albeit the hipster artisan way, sends shivers down my back. Can you imagine trying to keep up with the breakneck pace of new stuff from every cloud provider? `C.Hatfield` is the magical method of keeping up with the cloud providers.
 
 ## Squals: A Sister Project
 
-_What are `squals files`?_
+_What are `squal files`?_
 
 [Squals](//github.com/federalies/squals) is a sister project that aims to make it easy to discuss cloud components, and to deploy whole use-cases and normalize a multi-cloud deployment into "cloudformation templates" + `Google Cloud Templates`, and `Azure Deployment Template`. [Squals](//github.com/federalies/squals) exists because the idea of declarative cloud deployments is amazing until you realize "declaring dependencies" and "inter-connections" in yaml or json is well...not amazing.
 
@@ -24,7 +24,7 @@ After all it looks a lot like regular (imperative) programing. Squals embracces 
 
 ## A Story Together
 
-`Squals` and `Charlie Hatfield` work well under the story of Charles Hatfield anyway. He never claimed to be be able to make rain from nothing, but when a cloud already existed - he could get it to do his bidding. In the world of The Federalies, C. Hatfield is the machine that makes the machine.
+`Squals` and `Charlie Hatfield` have a storied history. C.Hatfield never claimed to be be able to make rain from nothing, but when a cloud already existed, he could get it to do his bidding. Likewise, in the world of The Federalies, `C. Hatfield` is the machine that makes the machine - so that given the existance of AWS, GCloud, and Azure, etc. squals helps you make the most of those clouds.
 
 ## Table of Contents
 

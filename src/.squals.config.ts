@@ -8,27 +8,34 @@ const outputPathPrefix = './'
  */
 export default {
   configList: [
-    { typesPrefix: ['AWS::AppSync::'] },
-    { typesPrefix: [{ 'AWS::Lambda::': { path: '/lambda' } }] }
+    {
+      typesPrefix: [
+        'AWS::AppSync::'
+        // 'AWS::Amplify::',
+        // 'AWS::ApiGateway::',
+        // 'AWS::ApiGatewayV2',
+        // 'AWS::Athena::',
+        // 'AWS::Budgets::Budget',
+        // 'AWS::CertificateManager::',
+        // 'AWS::CloudFormation::',
+        // 'AWS::CloudFront::',
+        // 'AWS::CodeBuild::',
+        // 'AWS::Cognito::',
+        // 'AWS::CodeCommit::',
+        // 'AWS::CodeDeploy::',
+        // 'AWS::CodePipeline::',
+        // 'AWS::DynamoDB::',
+        // 'AWS::Lambda::',
+        // 'AWS::KinesisFirehose::',
+        // 'AWS::Route53::',
+        // 'AWS::S3::',
+        // 'AWS::SES::',
+        // 'AWS::SNS::',
+        // 'AWS::SQS::'
+      ]
+    }
   ]
 } as ISqualsDeaultExport
-
-// OLD IDEAS
-// OLD IDEAS
-// OLD IDEAS
-export const useSchema = {
-  outpath: '../srcGen',
-  awsTypes: {
-    'AWS::S3::': { path: '/other/s3' },
-    'AWS::Lambda::': { path: '/lambda' },
-    'AWS::CloudFront::': { path: '/cloudfront' },
-    'AWS::Route53::': { path: '/route53' },
-    'AWS::CertificateManager::': { path: '/acm' },
-    'AWS::IAM::': { path: '/iam' },
-    'AWS::CodeBuild::': { path: '/codebuild' },
-    'AWS::AppSync::': { path: '/appsync' }
-  }
-}
 
 // #region interfaces
 

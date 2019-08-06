@@ -1,13 +1,6 @@
 #! ts-node cli.ts
 //
-// example terminal invocations
-// npx ts-node src/cli.ts -i ./src/.squals.config.ts
-// npx ts-node cli.ts
-// npx ts-node cli.ts -i .squals.config.ts
-// cat utils/fileList.txt | npx ts-node src/cli.ts
-// npx ts-node cli.ts < utils/fileList.txt
-// echo './src/config.ts ./src/config.ts ./src/config.ts' | npx ts-node src/cli.ts -i ./src/config.ts
-//
+// @see prgram.usage for examples on how to run the cli.
 // Maybe merge te Make Component and Make Validator
 // maybe use the command pattern when that happens
 
@@ -16,17 +9,9 @@ import fs from 'fs'
 import path from 'path'
 import getStdin from 'get-stdin'
 import program from 'commander'
+
 // import awsDefs from '../data/cloudformation_20190731.awsformat.json'
 const fsPromises = fs.promises
-
-const flatten = <T>(i: T[][]): T[] => {
-    return i.reduce(
-      (p, c) => {
-        return [...p, ...c]
-      },
-      [] as T[]
-    )
-  }
 
   /**
    * @description main IIFF
@@ -36,12 +21,29 @@ const flatten = <T>(i: T[][]): T[] => {
   // #region commander helpers
 
   /**
+   * @description no need for lodash yet
+   * @param i
+   */
+  const flatten = <T>(i: T[][]): T[] => {
+    return i.reduce(
+      (p, c) => {
+        return [...p, ...c]
+      },
+      [] as T[]
+    )
+  }
+
+  /**
    * @description side effect printer
    * @param d
    */
   const _p = <T>(d: T) => {
     console.log(`printer:: ${d}`)
     return d
+  }
+
+  const isAllCaps = (s: string) => {
+    return [...s].every(v => v === v.toUpperCase())
   }
 
   /**
@@ -85,6 +87,7 @@ const flatten = <T>(i: T[][]): T[] => {
    */
   const declarePath = async (pathString: string): Promise<fs.Stats> => {
     const ensurePath = path.parse(pathString).dir
+    // console.log({ ensurePath })
     let _stat: fs.Stats
     try {
       _stat = await fsPromises.lstat(ensurePath)
@@ -106,6 +109,18 @@ const flatten = <T>(i: T[][]): T[] => {
   // #endregion commander helpers
   program
     .version('0.1.0')
+    .usage(
+      `
+
+Example Executions Include:
+
+npx ts-node src/cli.ts -i ./src/.squals.config.ts
+npx ts-node cli.ts
+npx ts-node cli.ts -i .squals.config.ts
+cat utils/fileList.txt | npx ts-node src/cli.ts
+npx ts-node cli.ts < utils/fileList.txt
+echo './src/config.ts ./src/config.ts ./src/config.ts' | npx ts-node src/cli.ts -i ./src/config.ts`
+    )
     .option(
       '-i, --input [value]',
       'Input File Names (space separated) {{ eg = input1.js input2.js }} - defaults to: config.ts',
@@ -158,14 +173,22 @@ const flatten = <T>(i: T[][]): T[] => {
 
     const awsDefs = await import('../data/cloudformation_20190731.awsformat.json').catch(er => {
       const w = console.warn
-      w(`Attempted to use a local copy of a  ata folder with a cfm definition file in it.`)
+      w(`Attempted to use a local copy of data folder with a cfm definition file in it.`)
       w(`Since it was not found will attempt to pull one dowm from the network.`)
       w(`looked for : '../data/cloudformation_20190731.awsformat.json'`)
     })
 
-    awsDefs && awsDefs.default
-      ? await SqualsFile.fromAwsCfmDef(awsDefs.default).catch((er: any) => console.error(er))
-      : await SqualsFile.fromAwsCfmDef(awsDefs).catch((er: any) => console.error(er))
+    console.log(Object.keys(awsDefs as {}))
+
+    if (awsDefs && 'default' in awsDefs) {
+      await SqualsFile.fromAwsCfmDef(awsDefs.default).catch((er: any) => console.error(er))
+    } else {
+      console.log({ awsDefs })
+      console.log('Likley going to make network call')
+      await SqualsFile.fromAwsCfmDef(awsDefs).catch((er: any) => console.error(er))
+    }
+
+    // console.log({ definFile: SqualsFile.awsDefinitionFile })
 
     // @todo normalize the importedConfgs
     // how to handle inputs wher varried levels of specificity?
@@ -228,19 +251,23 @@ const flatten = <T>(i: T[][]): T[] => {
             const sqNestedFiles = (squalsCfgEntry.typesPrefix as any[]).map(
               (prefix: prefixType) => {
                 if (typeof prefix === 'string') {
+                  // shorthand notation
                   const ret = Object.keys(awsDefs.ResourceTypes)
                     .filter(resType => resType.startsWith(prefix))
                     // multiple matches give multiple
                     .map(resType => {
                       let [, _service, _object] = processType(resType)
                       return new SqualsFile(
-                        `${firstLower(_service)}/${firstLower(_object)}.ts`,
+                        isAllCaps(_service)
+                          ? `${_service}/${firstLower(_object)}.ts`
+                          : `${firstLower(_service)}/${firstLower(_object)}.ts`,
                         `${_service}${_object}`,
                         resType
                       )
                     })
                   return ret
                 } else {
+                  // shorthand + override
                   const awsPrefix = Object.keys(prefix)[0]
                   const ret = Object.keys(awsDefs.ResourceTypes)
                     .filter(resType => resType.startsWith(awsPrefix))
@@ -248,9 +275,11 @@ const flatten = <T>(i: T[][]): T[] => {
                     .map(resType => {
                       let [, _service, _object] = processType(resType)
                       return new SqualsFile(
-                        `${prefix[awsPrefix].path}/${firstLower(_service)}/${firstLower(
-                          _object
-                        )}.ts`,
+                        isAllCaps(_service)
+                          ? `${prefix[awsPrefix].path}/${_service}/${firstLower(_object)}.ts`
+                          : `${prefix[awsPrefix].path}/${firstLower(_service)}/${firstLower(
+                              _object
+                            )}.ts`,
                         `${_service}${_object}`,
                         resType
                       )
@@ -262,13 +291,15 @@ const flatten = <T>(i: T[][]): T[] => {
 
             const sqFiles = await Promise.all(flatten(sqNestedFiles).map(s => s.gen()))
             console.log(sqFiles)
+
             sqFiles.map(async sqF => {
               const wPath = path.resolve(
                 process.cwd(),
                 program.outputDirectory,
                 trimPathsToToken(sqF.filename)
               )
-              await declarePath(wPath)
+
+              await declarePath(_p(wPath))
               const fh = await fsPromises.open(wPath, 'w+').catch(er => {
                 console.error(`caught during the fs.open catch block`)
                 console.error(er)
