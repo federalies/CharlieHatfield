@@ -20,7 +20,7 @@ Charlie Hatfield is a command line tool that generates stubbed out typescript cl
 - [Install](#install)
 - [Usage](#usage)
 - [API](#api)
-- [What's With the Name](#ProjectName)
+- [What's With the Name](#project-name)
 - [Contributing](#contributing)
 - [License](#license)
 
