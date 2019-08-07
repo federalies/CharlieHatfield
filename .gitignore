@@ -175,3 +175,7 @@ dist/
 #_scratch folders
 **/_scratch/
 **.test-schema.json
+#_scratch files
+**_scratch*
+codeGen/
+Template

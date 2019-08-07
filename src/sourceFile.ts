@@ -1,7 +1,22 @@
-import crypto from "crypto"
-import multihash from "multihashes"
-import fetch, { Body } from "node-fetch"
+/**
+ * file: sourceFile is the class model of a squals source file 
+ * author: Eric Moore
+ * 
+ * @todo: fix generic validation function -  i as squals +  < className > 
+ * @todo: Special handle :: Tags?: ITags[] && tags?: Itags[]
+ * @todo: Go ahead and build out the validation function for JSON?
+ * @todo: Suffers from race condition - cli fails sometimes - run again and sometimes it works
+ * @todo: add funciotn output types to squal methods + type methods (Not attributes)
+ * @todo: can large interfaces be broken down into smaller chunks automattically
+ * @todo: What about incorporating AJV + JSON Schemas? Seems like it already handles some enum craziness? 
+ * @todo: can we sort the parts of the interfaces so that the ? are below the required elements
+ * @todo: can the input be typed when building methods
+ * @todo: in the cli normalize the CLI inputs such the inputs are de-deuped and prefer the most specfic versions under the de-dupe scheme
+ */
 // import { flow } from "lodash-es"
+// import crypto from "crypto"
+// import multihash from "multihashes"
+import fetch from "node-fetch"
 
 export class SqualsFile {
    filename: string
@@ -23,23 +38,6 @@ export class SqualsFile {
       }
       
    }
-   private static cacheIDs = {
-      sha1str: [
-         'bf21a9e8fbc5a3846fb05b4fa0859e0917b2202f',
-         '9ba95275f0111f2df3ee654a31e11262520d96fa',
-         '24180a93a00a15a903d17728c1b6c6a36bdd052d',
-         '9bce5737b7064a46e08305aeed38f56a46bbe805'
-      ],
-      sha1mHash_B64: [
-         'EShiZjIxYTllOGZiYzVhMzg0NmZiMDViNGZhMDg1OWUwOTE3YjIyMDJm',
-         'ESg5YmE5NTI3NWYwMTExZjJkZjNlZTY1NGEzMWUxMTI2MjUyMGQ5NmZh',
-         'ESg1ZjhjMWIxMjM1ZjIwZWZiNGE2MzllZGM0MTJiNTgwNTBmMWIyNjQx',
-         'ESg5YmNlNTczN2I3MDY0YTQ2ZTA4MzA1YWVlZDM4ZjU2YTQ2YmJlODA1'
-         // see if the `mBuffer_b64` differs across the other AWS URLS
-         // add them here
-       ]
-   }
-   private static msh1Buffer_ofAWSCfmDefs?: Buffer
    static awsDefinitionFile?: IAWSDefTop
    static dataFrom?: string
 
@@ -56,7 +54,7 @@ export class SqualsFile {
          _interfaces: {
             _min: "",
             _props: "",
-            _json: "st"
+            _json: ""
          },
          _methodObjs:{}
       }
@@ -66,10 +64,38 @@ export class SqualsFile {
          Properties: `I${this.Class}_props`
       }
       this.sections._imports = [
-         `import { squals, genComponentName, validatorGeneric, baseSchemas, IGetAtt, IRef, ITags, Itags } from '../Template'`,
-         `import { verifyIfThen, ifHas, multipleOf, stringNotEqual, ifType } from '../../utils/validations/objectCheck'`,
-         `import { struct } from 'superstruct'`,
-         `// import { flowRight } from 'lodash-es'`
+         `// @todo post-code-generation`,
+         `// `,
+         `// 1. Go through and remove all refs of object`,
+         `// 2. Look for enums in the documentation`,
+         `// 3. Flatten deep structures in the _min interface`,
+         `// 4. finish the constructor that maps the _min inputs to the _props outputs`,
+         `// 5. Look at the relationship between objects - consider if there would be a need for a _linkedData = {stringKey: object[] }`,
+         `// 6. Look for MultiMode, All-optional sections - and teas out if that should be a required union type Ex: LmabdaFunction:Code`,
+         `// 7. Chop Up Mega interfaces to make them more apprachable Ex: S3-Bucket`,
+         `// 8. Deal with remaining typescript warnings`,
+         `// `, 
+         `import { 
+            squals, 
+            struct, 
+            baseSchemas, 
+            validatorGeneric, 
+            genComponentName, 
+            IStrRefGetAtt, 
+            IGetAtt, 
+            ITags, 
+            Itags,
+            IRef
+         } from '../Template'`,
+         `import { 
+            verifyIfThen, 
+            ifHas, 
+            multipleOf, 
+            stringNotEqual, 
+            ifType 
+         } from '../../utils/validations/objectCheck'`,
+         
+
       ]
       this.sections._interfaces = { _min: "", _props: "", _json: "" }
       this.sections._methodObjs = {
@@ -139,14 +165,14 @@ export class SqualsFile {
    }
 
    /**
-       *
-       * @param awsVersion
-       * @param isList
-       * ```js
-       * const str = transformAWSPrims('String', true) console.log(str) // string[]
-       * const int = transformAWSPrims('Integer', false) console.log(int) // number
-       * ```
-       */
+    *
+    * @param awsVersion
+    * @param isList
+    * ```js
+    * const str = transformAWSPrims('String', true) console.log(str) // string[]
+    * const int = transformAWSPrims('Integer', false) console.log(int) // number
+    * ```
+    */
    static transformAWSPrims = (awsVersion?: IawsPrims, isList?: boolean) => {
       switch (awsVersion) {
          case "Boolean":
@@ -161,7 +187,7 @@ export class SqualsFile {
             return `Date${isList ? "[]" : ""}`
          case "String":
             default:
-            return `string${isList ? "[]" : ""}`
+            return `IStrRefGetAtt${isList ? "[]" : ""}`
       }
    }
 
@@ -171,8 +197,8 @@ export class SqualsFile {
     */
    static async fromAwsCfmDef(awsDefObj?: any) {
       if (awsDefObj) {
+         SqualsFile.dataFrom = 'local'
          SqualsFile.awsDefinitionFile = awsDefObj as IAWSDefTop
-         return SqualsFile.awsDefinitionFile
       } else {
          // setup CDN sub domains
          const cloudfrontCDNs = [
@@ -191,21 +217,34 @@ export class SqualsFile {
                fetch(`https://${subdomain}.cloudfront.net/${path}`)
             )
          )
+         console.warn({awsDefObj, urlUsed: r.url})
+
          SqualsFile.dataFrom = r.url
          SqualsFile.awsDefinitionFile = Object.freeze(await r.json())
+         
       }
+      return SqualsFile.awsDefinitionFile
+/**
+       * consider doing something here so that the tool can alert users 
+       * if the defintion file changes while the script is running
+       * 
+       * Clearly adding increasing the signal factor there is of interest so 
+       * only notifying when its a "meaningful" change would be good
+       */
+      
 
-      // find out if anything changed?
-      // setup the HashBuffer
-      const sha1HashBuffer = 
-      multihash.encode(
-         Buffer.from(crypto
-            .createHash("sha1")
-            .update(JSON.stringify(SqualsFile.awsDefinitionFile))
-            .digest("hex")),
-         "sha1"
-      )
 
+      // // find out if anything changed?
+      // // setup the HashBuffer
+      // const sha1HashBuffer = 
+      // multihash.encode(
+      //    Buffer.from(crypto
+      //       .createHash("sha1")
+      //       .update(JSON.stringify(SqualsFile.awsDefinitionFile))
+      //       .digest("hex")),
+      //    "sha1"
+      // )
+      // 
       // if we dont have one yet - set it
       // if(!SqualsFile.msh1Buffer_ofAWSCfmDefs){
       //    SqualsFile.msh1Buffer_ofAWSCfmDefs = sha1HashBuffer
@@ -227,8 +266,7 @@ export class SqualsFile {
       //    // console.log({'squalsFile.mhash_b64': SqualsFile.SHA1ofDefFile.toString('base64')})
       //    // console.log({'net.mhash_b64':sha1HashBuffer.toString('base64')})
       // }
-      
-      return SqualsFile.awsDefinitionFile
+           
    }
 
    async attributes(a: IStrToStr) {
@@ -333,6 +371,13 @@ export class SqualsFile {
       return ret
    }
    
+   _attibutesToString(attributeObj:IStrToStr):string{
+      return Object.entries(attributeObj).reduce((p,[key, value])=>{
+         p+= `${key} :${value} \n`
+         return p
+      },'').replace("Type :", "Type = ")
+   }
+
    toString():string{
       return `
       ${this.sections._imports.join('\n')}
@@ -350,14 +395,6 @@ export class SqualsFile {
 
       `
    }
-
-   _attibutesToString(attributeObj:IStrToStr):string{
-      return Object.entries(attributeObj).reduce((p,[key, value])=>{
-         p+= `${key} :${value} \n`
-         return p
-      },'').replace("Type :", "Type = ")
-   }
-
 
    /**
     * @description Functional Core for Data Processing (sync)

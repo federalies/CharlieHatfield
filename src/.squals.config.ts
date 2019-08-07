@@ -10,9 +10,9 @@ export default {
   configList: [
     {
       typesPrefix: [
-        'AWS::AppSync::'
+        'AWS::AppSync::',
         // 'AWS::Amplify::',
-        // 'AWS::ApiGateway::',
+        'AWS::ApiGateway::',
         // 'AWS::ApiGatewayV2',
         // 'AWS::Athena::',
         // 'AWS::Budgets::Budget',
@@ -25,10 +25,10 @@ export default {
         // 'AWS::CodeDeploy::',
         // 'AWS::CodePipeline::',
         // 'AWS::DynamoDB::',
-        // 'AWS::Lambda::',
+        'AWS::Lambda::',
         // 'AWS::KinesisFirehose::',
         // 'AWS::Route53::',
-        // 'AWS::S3::',
+        'AWS::S3::'
         // 'AWS::SES::',
         // 'AWS::SNS::',
         // 'AWS::SQS::'

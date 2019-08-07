@@ -178,30 +178,15 @@ echo './src/config.ts ./src/config.ts ./src/config.ts' | npx ts-node src/cli.ts 
       w(`looked for : '../data/cloudformation_20190731.awsformat.json'`)
     })
 
-    console.log(Object.keys(awsDefs as {}))
-
     if (awsDefs && 'default' in awsDefs) {
       await SqualsFile.fromAwsCfmDef(awsDefs.default).catch((er: any) => console.error(er))
     } else {
-      console.log({ awsDefs })
       console.log('Likley going to make network call')
+      console.log({ awsDefs })
       await SqualsFile.fromAwsCfmDef(awsDefs).catch((er: any) => console.error(er))
     }
 
-    // console.log({ definFile: SqualsFile.awsDefinitionFile })
-
-    // @todo normalize the importedConfgs
-    // how to handle inputs wher varried levels of specificity?
-    // Example:
-    // configList: [
-    //      {
-    //        awsType: 'AWS::Lambda::Alias', // required
-    //        className: 'LambdaAlias',
-    //        file: 'alias.ts'
-    //      },{
-    //        awsTypesPrefix: ['AWS::Lambda::']
-    //      }
-    //
+    console.log({ from: SqualsFile.dataFrom })
 
     const ret = (importedConfigs as ISqualsConfig[]).map(config => {
       config.configList.map(async squalsCfgEntry => {
@@ -290,7 +275,7 @@ echo './src/config.ts ./src/config.ts ./src/config.ts' | npx ts-node src/cli.ts 
             )
 
             const sqFiles = await Promise.all(flatten(sqNestedFiles).map(s => s.gen()))
-            console.log(sqFiles)
+            console.log(sqFiles.map(s => ({ file: s.filename, type: s.awsType })))
 
             sqFiles.map(async sqF => {
               const wPath = path.resolve(
