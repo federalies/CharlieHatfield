@@ -1,18 +1,21 @@
 /**
- * file: sourceFile is the class model of a squals source file 
+ * 
+ * SourceFile is the class model of a squals source file 
  * author: Eric Moore
  * 
- * @todo: fix generic validation function -  i as squals +  < className > 
+ * @todo: can the input be typed when building methods
+ * @todo: can we sort the parts of the interfaces so that the ? are below the required elements
  * @todo: Special handle :: Tags?: ITags[] && tags?: Itags[]
  * @todo: Go ahead and build out the validation function for JSON?
- * @todo: Suffers from race condition - cli fails sometimes - run again and sometimes it works
- * @todo: add funciotn output types to squal methods + type methods (Not attributes)
- * @todo: can large interfaces be broken down into smaller chunks automattically
+ * @todo: decompose large interfaces, into smaller chunks automattically??
  * @todo: What about incorporating AJV + JSON Schemas? Seems like it already handles some enum craziness? 
- * @todo: can we sort the parts of the interfaces so that the ? are below the required elements
- * @todo: can the input be typed when building methods
  * @todo: in the cli normalize the CLI inputs such the inputs are de-deuped and prefer the most specfic versions under the de-dupe scheme
+ * @done: Suffers from race condition - cli fails sometimes - run again and sometimes it works
+ * @done: add funciotn output types to squal methods + type methods (Not attributes)
+ * @done: fix generic validation function -  i as squals +  < className > 
+ * 
  */
+
 // import { flow } from "lodash-es"
 // import crypto from "crypto"
 // import multihash from "multihashes"
@@ -110,48 +113,61 @@ export class SqualsFile {
             name:'fromString',
             modifiers:['static'],
             args:[{alias:'s', type:'string'}],
+            returnType:this.Class,
             returns:`${this.Class}.validate(JSON.parse(s))`,
          },
          'fromJSON':{
             name:'fromJSON',
             modifiers:['static'],
             args:[{alias:'i', type:'object'}],
+            returnType:this.Class,
             returns:`${this.Class}.validateJSON(i as I${this.Class}_json )`
          },
          'fromJS':{
             name:'fromJS',
             modifiers:['static'],
             args:[{alias:'i', type:'object'}],
+            returnType:this.Class,
             returns:` ${this.Class}.validateJS(i as I${this.Class}_min )`
          },
          'from':{
             name:'from',
             modifiers:['static'],
             args:[{alias:'i', type:'string | object'}],
+            returnType:this.Class,
             returns:` ${this.Class}.validate(i)`
          },
          'validate':{
             name:'validate',
             modifiers:['static'],
             args:[{alias:'i', type:'string | object'}],
-            returns:` validatorGeneric<${this.Class}>(i)`
+            returnType:this.Class,
+            returns:` validatorGeneric<${this.Class}>(i as squals, ${this.Class})`
          },
          'validateJS':{
             name:'validateJS',
             modifiers:['static'],
             args:[{alias:'i', type:`I${this.Class}_min`}],
-            body:`throw new Error('not implemented yet')`,
+            returnType:this.Class,
+            body:`// validation logic here`,
+            returns:`new ${this.Class}(i)`
          },
          'validateJSON':{
             name:'validateJSON',
             modifiers:['static'],
             args:[{alias:'i', type:`I${this.Class}_json`}],
-            body:`throw new Error('not implemented yet')`,
+            returnType:this.Class,
+            body:`// validation logic here then...
+            const ret = new ${this.Class}(i)
+            ret.name = i.name
+            ret.Properties = i.Properties`,
+            returns:`ret`
          },
          '_name':{
             name:'_name',
             args:[{alias:'s', type:'string'}],
             body:'this.name = s',
+            returnType:this.Class,
             returns:`this`
          },
          'toJSON':{
@@ -202,12 +218,8 @@ export class SqualsFile {
       } else {
          // setup CDN sub domains
          const cloudfrontCDNs = [
-            "d68hl49wbnanq", // USA/NCali
-            "dnwj8swjjbsbt", // USA/Ohio
-            "d1uauaxba7bl26", // US/Virgina
-            "d1742qcu2c1ncx", // GB/LondonTown
-            "d33vqc0rt9ld30", // JP/Tokyo
-            "d2senuesg1djtx" // IN/Mumbai
+            // see data folder as to why we chose us-west-2
+            'd201a2mn26r7lk' // us-west-2
          ]
          const path = "latest/gzip/CloudFormationResourceSpecification.json"
 
@@ -217,8 +229,11 @@ export class SqualsFile {
                fetch(`https://${subdomain}.cloudfront.net/${path}`)
             )
          )
-         console.warn({awsDefObj, urlUsed: r.url})
-
+         console.warn({urlUsed: r.url},'be warned that not all listed resrouces can be derived from the Specfile')
+         // console.warn('these can not be derived', [ 'AWS::SageMaker::CodeRepository',
+         // 'AWS::PinpointEmail::DedicatedIpPool',
+         // 'AWS::EC2::VPCEndpointService',
+         // 'AWS::EC2::VPCEndpointConnectionNotification' ])
          SqualsFile.dataFrom = r.url
          SqualsFile.awsDefinitionFile = Object.freeze(await r.json())
          
@@ -358,13 +373,14 @@ export class SqualsFile {
          modifiers: data.modifiers ? data.modifiers : [],
          args: data.args ? data.args : [],
          body: data.body ? data.body : '',
+         returnType: data.returnType ? data.returnType : '',
          returns: data.returns ? data.returns : '',
       }
          
       const _args = d.args.map(v=>`${v.alias}: ${v.type}`)
       
       let ret  = `${d.docString}
-      ${d.modifiers.join(' ')} ${d.name} ( ${d.args.length>0 ? _args : ''} ) { 
+      ${d.modifiers.join(' ')} ${d.name} ( ${d.args.length>0 ? _args : ''} ):${d.returnType} { 
          ${d.body}`
 
       ret += d.returns.length>0 ? `\n return ${d.returns} \n } \n` : '\n } \n'
@@ -456,6 +472,7 @@ export class SqualsFile {
                   name:firstLower(propertyName),
                   args:[{alias:'i', type: SqualsFile.transformAWSPrims(propertyDef.PrimitiveType)}],
                   body:`this.Properties.${propertyName} = i`,
+                  returnType:this.Class,
                   returns: `this`
                   }}
                }
@@ -469,6 +486,7 @@ export class SqualsFile {
                   name:firstLower(propertyName),
                   args:[{alias:'i', type: SqualsFile.transformAWSPrims(propertyDef.PrimitiveItemType, true)}],
                   body:`this.Properties.${propertyName} = i`,
+                  returnType:this.Class,
                   returns: `this`
                   }}
                }
@@ -482,6 +500,7 @@ export class SqualsFile {
                   name:firstLower(propertyName),
                   args:[{alias:'i', type: `object[]`}],
                   body:`this.Properties.${propertyName} = i`,
+                  returnType:this.Class,
                   returns: `this`
                   }
                }
@@ -496,6 +515,7 @@ export class SqualsFile {
                   name:firstLower(propertyName),
                   args:[{alias:'i', type: `object`}],
                   body:`this.Properties.${propertyName} = i`,
+                  returnType:this.Class,
                   returns: `this`
                   }
                }
@@ -705,6 +725,7 @@ interface Imethod_Elements{
    args?: {alias:string, type:string}[]
    body?: string
    returns?: string
+   returnType?: string
 }
 
 interface IStrToStr {

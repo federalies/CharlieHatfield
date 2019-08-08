@@ -16,22 +16,22 @@ export default {
         // 'AWS::ApiGatewayV2',
         // 'AWS::Athena::',
         // 'AWS::Budgets::Budget',
-        // 'AWS::CertificateManager::',
-        // 'AWS::CloudFormation::',
-        // 'AWS::CloudFront::',
+        'AWS::CertificateManager::',
+        'AWS::CloudFormation::',
+        'AWS::CloudFront::',
         // 'AWS::CodeBuild::',
-        // 'AWS::Cognito::',
+        'AWS::Cognito::',
         // 'AWS::CodeCommit::',
         // 'AWS::CodeDeploy::',
-        // 'AWS::CodePipeline::',
-        // 'AWS::DynamoDB::',
+        'AWS::CodePipeline::',
+        'AWS::DynamoDB::',
         'AWS::Lambda::',
         // 'AWS::KinesisFirehose::',
         // 'AWS::Route53::',
-        'AWS::S3::'
-        // 'AWS::SES::',
-        // 'AWS::SNS::',
-        // 'AWS::SQS::'
+        'AWS::S3::',
+        'AWS::SES::',
+        'AWS::SNS::',
+        'AWS::SQS::'
       ]
     }
   ]

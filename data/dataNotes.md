@@ -18,3 +18,5 @@ Prove SES is missing
   - `https://d68hl49wbnanq.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json`
 
   `curl https://d68hl49wbnanq.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json --compressed -o - | jq ' [ .PropertyTypes | to_entries[] ] | map( select( .value | has( "Properties" )!=true ))'`
+
+5. Make a bash script to ensure that all the endpoints selected have same failure mode
