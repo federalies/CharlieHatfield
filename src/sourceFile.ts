@@ -5,6 +5,7 @@
  * 
  * @todo: can the input be typed when building methods
  * @todo: can we sort the parts of the interfaces so that the ? are below the required elements
+ * @todo: can they also be sorted by single liners vs multi liner - single-liner to the top
  * @todo: Special handle :: Tags?: ITags[] && tags?: Itags[]
  * @todo: Go ahead and build out the validation function for JSON?
  * @todo: decompose large interfaces, into smaller chunks automattically??
@@ -20,8 +21,10 @@
 // import crypto from "crypto"
 // import multihash from "multihashes"
 import fetch from "node-fetch"
+import PATCH from '../data/cloudformation_20190809.patch'
 
 export class SqualsFile {
+   // #region attributes
    filename: string
    Class: string
    awsType: string
@@ -31,16 +34,17 @@ export class SqualsFile {
    }
    sections: {
       _imports: string[]
-      _methodObjs : Imethods
-      _attributes: IStrToStr
+      _methods : Imethods
+      _attributes: IStrMap
       _interfaces: {
-         _min: string
-         _props: string
-         _json: string
-         [str: string]: string
+         [str: string]: {
+            iname: string 
+            data: IStrToStrOrObject
+         }
       }
       
    }
+   // #endregion attributes
    static awsDefinitionFile?: IAWSDefTop
    static dataFrom?: string
 
@@ -55,11 +59,11 @@ export class SqualsFile {
          _imports: [""],
          _attributes: {},
          _interfaces: {
-            _min: "",
-            _props: "",
-            _json: ""
+            _min: {iname:'_min', data:{}},
+            _props: {iname:'_props', data:{}},
+            _json: {iname:'_json', data:{}},
          },
-         _methodObjs:{}
+         _methods:{}
       }
       this.sections._attributes = {
          name: "string",
@@ -100,14 +104,11 @@ export class SqualsFile {
          
 
       ]
-      this.sections._interfaces = { _min: "", _props: "", _json: "" }
-      this.sections._methodObjs = {
+      this.sections._methods = {
          'constructor':{
             name:'constructor',
-            body:`
-            this.name = genComponentName()
-            this.Properties = {}
-            // finish the constructor`,
+            args:[{alias:'i', type:`I${this.Class}_min`}],
+            body:`this.name = genComponentName(i.name) \n this.Properties = ${this.Class}.inputTransform(i)`
          },
          'fromString':{
             name:'fromString',
@@ -142,12 +143,23 @@ export class SqualsFile {
             modifiers:['static'],
             args:[{alias:'i', type:'string | object'}],
             returnType:this.Class,
+            docString:`/**
+            * @description is the smart/ergonomic function that the various input options 
+            * @throws
+            * @param i is the input interface for the ${this.Class}
+            * 
+            */`,
             returns:` validatorGeneric<${this.Class}>(i as squals, ${this.Class})`
          },
          'validateJS':{
             name:'validateJS',
             modifiers:['static'],
             args:[{alias:'i', type:`I${this.Class}_min`}],
+            docString:`/**
+            * @param i is the input interface for the ${this.Class}
+            * @throws
+            * 
+            */`,
             returnType:this.Class,
             body:`// validation logic here`,
             returns:`new ${this.Class}(i)`
@@ -157,11 +169,28 @@ export class SqualsFile {
             modifiers:['static'],
             args:[{alias:'i', type:`I${this.Class}_json`}],
             returnType:this.Class,
+            docString:`/**
+            * @param i is the JSON interface for the ${this.Class}
+            * @throws
+            * 
+            */`,
             body:`// validation logic here then...
-            const ret = new ${this.Class}(i)
-            ret.name = i.name
-            ret.Properties = i.Properties`,
+            const ret = new ${this.Class}({})
+            ret.name = Object.keys(i)[0]
+            ret.Properties = i[ret.name].Properties`,
             returns:`ret`
+         },
+         'inputTransform':{
+            name:'inputTransform',
+            modifiers:['static'],
+            args:[{alias:'i', type:`I${this.Class}_min`}],
+            returnType: `I${this.Class}_props`,
+            body:`const ret = {} \n // make thge return Objects for this.Properties`,
+            returns:`ret`
+         },
+         'toJSON':{
+            name:'toJSON',
+            returns:` {[this.name]:{ Type:${this.sections._attributes.Type}, Properties: this.Properties }}`
          },
          '_name':{
             name:'_name',
@@ -169,13 +198,6 @@ export class SqualsFile {
             body:'this.name = s',
             returnType:this.Class,
             returns:`this`
-         },
-         'toJSON':{
-            name:'toJSON',
-            returns:` {[this.name]:{
-               Type:${this.sections._attributes.Type},
-               Properties: this.Properties
-           }}`
          },
       }
    }
@@ -212,9 +234,14 @@ export class SqualsFile {
     * @param awsDefObj
     */
    static async fromAwsCfmDef(awsDefObj?: any) {
-      if (awsDefObj) {
-         SqualsFile.dataFrom = 'local'
-         SqualsFile.awsDefinitionFile = awsDefObj as IAWSDefTop
+      if (SqualsFile.awsDefinitionFile || awsDefObj) {
+         if(awsDefObj){
+            SqualsFile.dataFrom = 'local'
+            SqualsFile.awsDefinitionFile = awsDefObj as IAWSDefTop
+         } else{
+            // do nothing... 
+            // it's already set...
+         }
       } else {
          // setup CDN sub domains
          const cloudfrontCDNs = [
@@ -229,14 +256,19 @@ export class SqualsFile {
                fetch(`https://${subdomain}.cloudfront.net/${path}`)
             )
          )
-         console.warn({urlUsed: r.url},'be warned that not all listed resrouces can be derived from the Specfile')
-         // console.warn('these can not be derived', [ 'AWS::SageMaker::CodeRepository',
-         // 'AWS::PinpointEmail::DedicatedIpPool',
-         // 'AWS::EC2::VPCEndpointService',
-         // 'AWS::EC2::VPCEndpointConnectionNotification' ])
-         SqualsFile.dataFrom = r.url
-         SqualsFile.awsDefinitionFile = Object.freeze(await r.json())
+
+         console.warn({urlUsed: r.url},'be warned that not all listed resrouces can be derived from the Specfile')         
          
+         const urlRespData = await r.json()
+
+         const mergedWithPatch = {
+            ResourceTypes: { ...urlRespData.ResourceTypes, ...PATCH.ResourceTypes },
+            PropertyTypes: { ...urlRespData.PropertyTypes, ...PATCH.PropertyTypes },
+            ResourceSpecificationVersion: urlRespData.ResourceSpecificationVersion
+         }
+         
+         SqualsFile.dataFrom = r.url
+         SqualsFile.awsDefinitionFile = Object.freeze(mergedWithPatch)
       }
       return SqualsFile.awsDefinitionFile
 /**
@@ -284,7 +316,7 @@ export class SqualsFile {
            
    }
 
-   async attributes(a: IStrToStr) {
+   async attributes(a: IStrMap) {
       this.sections._attributes = { ...a, ...this.sections._attributes }
       return this
    }
@@ -299,15 +331,19 @@ export class SqualsFile {
     * @param awsDefObj 
     */
    async gen(awsDefObj?: any){
-     await SqualsFile.fromAwsCfmDef(awsDefObj)
+     if (!awsDefObj &&  !SqualsFile.awsDefinitionFile ){
+      await SqualsFile.fromAwsCfmDef(awsDefObj)
+     }
      return (await this.genMethods()).genInterfaces()
    }
 
-   async genInterfaces(awsDefs?: IAWSDefTop) {
-      if(!SqualsFile.awsDefinitionFile){
+   async genInterfaces(awsDefObj?: IAWSDefTop) {
+      if (!SqualsFile.awsDefinitionFile && !awsDefObj ){
          console.warn("No defintion file? - call the defintion file handler")
-         await SqualsFile.fromAwsCfmDef(awsDefs)
+         await SqualsFile.fromAwsCfmDef(awsDefObj)
       }
+
+      const def = SqualsFile.awsDefinitionFile || awsDefObj
       
       const firstLower = (s:string )=>{
          return `${s[0].toLowerCase()}${s.slice(1)}`
@@ -317,27 +353,21 @@ export class SqualsFile {
          this.awsType, // will not change through the recursion calls
          this.awsType, // this WILL change via recursion calls
          "resource",
-         Object.freeze((SqualsFile.awsDefinitionFile as IAWSDefTop).ResourceTypes),
-         Object.freeze((SqualsFile.awsDefinitionFile as IAWSDefTop).PropertyTypes)
+         Object.freeze((def as IAWSDefTop).ResourceTypes),
+         Object.freeze((def as IAWSDefTop).PropertyTypes)
       )
 
       const _minObj = Object.entries(propsInterfacesObj).reduce(
-         (prior, [key, value]) => ({ ...prior, [firstLower(key)]: value }),{})
+         (prior, [key, value]) => ({ ...prior, [firstLower(key)]: value }),{'name?':'string'})
 
-      const _props = `interface I${this.Class}_props
-        ${JSON.stringify(propsInterfacesObj, null, 3)}
-      `
+      const _props = {iname:`I${this.Class}_props`, data:propsInterfacesObj}      
 
-      const _json = `interface I${this.Class}_json {
-      [n:string]:{
-          Type: '${this.awsType}'
-          Properties: I${this.Class}_props
-        }
-      }`
-
-      const _min = `interface I${this.Class}_min 
-        ${JSON.stringify(_minObj, null, 3)}
-      `
+      const _json = {iname:`I${this.Class}_json`,data:{
+         Type: `${this.awsType}`,
+         Properties: `I${this.Class}_props` 
+      }}      
+      
+      const _min = {iname:`I${this.Class}_min`, data: _minObj}      
 
       this.sections._interfaces = {
          ...this.sections._interfaces,
@@ -348,18 +378,20 @@ export class SqualsFile {
       return this
    }
 
-   async genMethods() {
-      if(!SqualsFile.awsDefinitionFile){
-         await SqualsFile.fromAwsCfmDef()
+   async genMethods(awsDefObj?:unknown) {
+      if (!SqualsFile.awsDefinitionFile && !awsDefObj ){
+         await SqualsFile.fromAwsCfmDef(awsDefObj)
       }
 
-      this.sections._methodObjs = {...this.sections._methodObjs,
+      const def = SqualsFile.awsDefinitionFile || awsDefObj
+
+      this.sections._methods = {...this.sections._methods,
          ...this.__methods(
             this.awsType,
             this.awsType,
             "resource",
-            (SqualsFile.awsDefinitionFile as IAWSDefTop).ResourceTypes,
-            (SqualsFile.awsDefinitionFile as IAWSDefTop).PropertyTypes
+            Object.freeze((def as IAWSDefTop).ResourceTypes),
+            Object.freeze((def as IAWSDefTop).PropertyTypes)
          )
       }
 
@@ -380,14 +412,33 @@ export class SqualsFile {
       const _args = d.args.map(v=>`${v.alias}: ${v.type}`)
       
       let ret  = `${d.docString}
-      ${d.modifiers.join(' ')} ${d.name} ( ${d.args.length>0 ? _args : ''} ):${d.returnType} { 
+      ${d.modifiers ? d.modifiers.join(' ') : ''}${d.name}(${d.args.length>0 ? _args : ''})${d.returnType ? `:${d.returnType}` : ''}{ 
          ${d.body}`
-
       ret += d.returns.length>0 ? `\n return ${d.returns} \n } \n` : '\n } \n'
       return ret
    }
-   
-   _attibutesToString(attributeObj:IStrToStr):string{
+
+   interface_toSting(i:{iname?:string; data:IStrToStrOrObject}):string{
+      const interfaceData = Object.entries(i.data).reduce((p,[ckey, cData])=>{
+         if(typeof cData ==='string'){
+            return `${p}\n${ckey}:${cData}`
+         }else if(Array.isArray(cData)){
+            const firstElem = cData[0]
+            if(Array.isArray(firstElem)){
+               return `${p}\n ${ckey}: [[${this.interface_toSting({iname:undefined, data: {[ckey]:cData}})}]]`
+            }
+            else {
+               return `${p}\n ${ckey}: [${this.interface_toSting({iname:undefined, data: {[ckey]:cData}})}]`
+            }
+         }else{
+            return `${p}\n ${ckey}: {${this.interface_toSting({iname:undefined, data: {[ckey]:cData}})}}`
+         }
+      },'')
+
+      return i.iname ? `interface ${i.iname} { \n ${interfaceData} \n }` : interfaceData
+   }
+
+   attibutes_toString(attributeObj:IStrMap):string{
       return Object.entries(attributeObj).reduce((p,[key, value])=>{
          p+= `${key} :${value} \n`
          return p
@@ -398,16 +449,18 @@ export class SqualsFile {
       return `
       ${this.sections._imports.join('\n')}
       class ${this.Class} implements ${this.ClassExts.implements.join(', ')} {
-         ${this._attibutesToString(this.sections._attributes)}
-         ${Object.entries(this.sections._methodObjs)
+         // #region attributes
+         ${this.attibutes_toString(this.sections._attributes)}
+         // #endregion attributes
+         ${Object.entries(this.sections._methods)
             .map(([n,d])=>this.methods_toString(n,d))
             .join('\n')}
       }
-      //# region interfaces
-      ${this.sections._interfaces._min.replace(/"/g,'')}
-      ${this.sections._interfaces._props.replace(/"/g,'')}
-      ${this.sections._interfaces._json.replace(/"/g,'')}
-      //# endregion interfaces
+      // #region interfaces
+      ${Object.values(this.sections._interfaces).map(v=>{
+         this.interface_toSting(v)
+      })}
+      // #endregion interfaces
 
       `
    }
@@ -559,7 +612,7 @@ export class SqualsFile {
       lookIn: "resource" | "property",
       resourceMap: { [s: string]: IAWSCfmDefs },
       propertyMap: { [s: string]: IAWSCfmDefs }
-   ): object {
+   ): IStrToStrOrObject {
    
       const myMap = lookIn === "resource" ? resourceMap : propertyMap
    
@@ -660,7 +713,7 @@ export class SqualsFile {
                }
             } 
             else if (propDef.ItemType) {
-               //special case for Tag List - short-circuit the noncoformist lookup
+               // SPEACIAL CASE for Tag List - short-circuit the noncoformist lookup
                if (propDef.ItemType === "Tag") {
                   return {
                      ...prior,
@@ -668,8 +721,25 @@ export class SqualsFile {
                         { Key: "string", Value: "string" }
                      ]
                   }
-               } else {
-                  // regular ItemType case which is not TAGs
+               } else if(propDef.Type === "sq:Vector:2"){
+                  // SPEACIAL CASE for new sq:Types
+                  return {
+                     ...prior,
+                     [`${propName}${propDef.Required ? "" : "?"}`]: [[
+                        this.__interfaces(
+                           awsResType,
+                           `${awsResType}.${
+                              (propDef as Icomplex_list & IcfmProps_usualSuspects)
+                                 .ItemType
+                           }`,
+                           "property",
+                           resourceMap,
+                           propertyMap
+                        )
+                     ]]
+                  }
+               }else {
+                  // regular non-Tags ItemType
                   return {
                      ...prior,
                      [`${propName}${propDef.Required ? "" : "?"}`]: [
@@ -707,9 +777,9 @@ export class SqualsFile {
          {}
       )
       return ret
-   }
-   
+   }   
 }
+
 
 // #region interfaces
 
@@ -728,11 +798,11 @@ interface Imethod_Elements{
    returnType?: string
 }
 
-interface IStrToStr {
+interface IStrMap {
    [str: string]: string
 }
 interface IStrToStrOrObject {
-   [str: string]: string | object
+   [str: string]: string | IStrToStrOrObject | IStrToStrOrObject[] | IStrToStrOrObject[][]
 }
 
 export interface IAWSDefTop {
@@ -813,5 +883,6 @@ interface Icomplex_list {
    Type: "List"
    ItemType: string
 }
+
 
 // #endregion interfaces

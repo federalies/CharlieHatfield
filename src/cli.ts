@@ -171,7 +171,7 @@ echo './src/config.ts ./src/config.ts ./src/config.ts' | npx ts-node src/cli.ts 
       }
     }
 
-    const awsDefs = await import('../data/cloudformation_20190731.awsformat.json').catch(er => {
+    const awsDefs = await import('../data/cloudformation_20190809.awsformat.json').catch(er => {
       const w = console.warn
       w(`Attempted to use a local copy of data folder with a cfm definition file in it.`)
       w(`Since it was not found will attempt to pull one dowm from the network.`)
@@ -181,7 +181,7 @@ echo './src/config.ts ./src/config.ts ./src/config.ts' | npx ts-node src/cli.ts 
     if (awsDefs && 'default' in awsDefs) {
       await SqualsFile.fromAwsCfmDef(awsDefs.default).catch((er: any) => console.error(er))
     } else {
-      console.log('Likley going to make network call')
+      console.log('Likely going to make network call')
       console.log({ awsDefs })
       await SqualsFile.fromAwsCfmDef(awsDefs).catch((er: any) => console.error(er))
     }
@@ -275,7 +275,8 @@ echo './src/config.ts ./src/config.ts ./src/config.ts' | npx ts-node src/cli.ts 
             )
 
             const sqFiles = await Promise.all(flatten(sqNestedFiles).map(s => s.gen()))
-            console.log(sqFiles.map(s => ({ file: s.filename, type: s.awsType })))
+
+            // console.log(sqFiles.map(s => ({ file: s.filename, type: s.awsType })))
 
             sqFiles.map(async sqF => {
               const wPath = path.resolve(

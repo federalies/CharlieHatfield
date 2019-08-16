@@ -10,28 +10,32 @@ export default {
   configList: [
     {
       typesPrefix: [
+        'AWS::S3::',
+        'AWS::CloudFront::',
+        'AWS::Route53::',
         'AWS::AppSync::',
-        // 'AWS::Amplify::',
+        'AWS::IAM::',
         'AWS::ApiGateway::',
-        // 'AWS::ApiGatewayV2',
-        // 'AWS::Athena::',
-        // 'AWS::Budgets::Budget',
+        'AWS::CodeBuild::',
+        'AWS::AppSync::',
+        'AWS::Lambda::',
         'AWS::CertificateManager::',
         'AWS::CloudFormation::',
-        'AWS::CloudFront::',
-        // 'AWS::CodeBuild::',
+
         'AWS::Cognito::',
-        // 'AWS::CodeCommit::',
-        // 'AWS::CodeDeploy::',
         'AWS::CodePipeline::',
         'AWS::DynamoDB::',
-        'AWS::Lambda::',
-        // 'AWS::KinesisFirehose::',
-        // 'AWS::Route53::',
-        'AWS::S3::',
         'AWS::SES::',
         'AWS::SNS::',
         'AWS::SQS::'
+
+        // 'AWS::CodeDeploy::',
+        // 'AWS::CodeCommit::',
+        // 'AWS::Amplify::',
+        // 'AWS::ApiGatewayV2',
+        // 'AWS::Athena::',
+        // 'AWS::Budgets::Budget',
+        // 'AWS::KinesisFirehose::',
       ]
     }
   ]

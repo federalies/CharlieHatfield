@@ -2,8 +2,11 @@
 
 import fetch from 'node-fetch'
 import { AWS_LISTED_TYPES } from './AWSListedTypes'
+import PATCH from './cloudformation_20190809.patch'
 // import path from 'path'
 // import fs from 'fs'
+
+const WITH_PATCH = true
 
 const zip = <T, U>(A: T[], B: U[]) => {
   let ret: [T, U][]
@@ -101,11 +104,7 @@ const setInterSection = (A: Set<string>, B: Set<string>): string[] => {
 
   const d1 = await Promise.all(zipped.map(async ([sub, Resp]) => [sub, await Resp.json()]))
   const d2 = d1.reduce((prior, [sub, data]) => ({ ...prior, [`${sub}`]: data }), {}) as {
-    [suburl: string]: {
-      PropertyTypes: object
-      ResourceTypes: object
-      ResourceSpecificationVersion: '5.0.0'
-    }
+    [suburl: string]: Specfile
   }
 
   // console.log({ d2 })
@@ -138,13 +137,7 @@ const setInterSection = (A: Set<string>, B: Set<string>): string[] => {
     }
   ] as validationFn[]
 
-  // perhaps grow this into more a structure output as oppose to a string output
-  interface validationFn {
-    (name: string, data: any, propMap: any, resMap: any): boolean | string
-  }
-
-  // Drive through the data
-  Object.entries(d2).map(([sub, urlRespData]) => {
+  const validatePrinter = (sub: string, urlRespData: Specfile) => {
     console.log(
       { v: urlRespData.ResourceSpecificationVersion },
       `https://${sub}.cloudfront.net/${_path}`
@@ -181,5 +174,46 @@ const setInterSection = (A: Set<string>, B: Set<string>): string[] => {
     console.log({ listedNotCovered })
 
     console.log('\n\n')
-  })
+  }
+
+  // Drive through the data
+  Object.entries(d2)
+    .map(([sub, urlRespData]) => {
+      return [sub, urlRespData]
+    })
+    .map(([sub, urlRespData]) => {
+      validatePrinter(sub as string, urlRespData as Specfile)
+    })
+
+  if (WITH_PATCH) {
+    Object.entries(d2)
+      .map(([sub, urlRespData]) => {
+        const mergedWithPatch = {
+          ResourceTypes: { ...urlRespData.ResourceTypes, ...PATCH.ResourceTypes },
+          PropertyTypes: { ...urlRespData.PropertyTypes, ...PATCH.PropertyTypes },
+          ResourceSpecificationVersion: urlRespData.ResourceSpecificationVersion
+        }
+        return [sub, mergedWithPatch]
+      })
+      .map(([sub, urlRespData]) => {
+        validatePrinter(sub as string, urlRespData as Specfile)
+        const d = urlRespData as any
+        console.log({
+          d:
+            d.ResourceTypes['AWS::AppSync::GraphQLApi'].Properties.AdditionalAuthenticationProviders
+        })
+      })
+  }
+  console.log({ WITH_PATCH })
 })()
+
+// perhaps grow this into more a structure output as oppose to a string output
+interface validationFn {
+  (name: string, data: any, propMap: any, resMap: any): boolean | string
+}
+
+interface Specfile {
+  PropertyTypes: object
+  ResourceTypes: object
+  ResourceSpecificationVersion: '5.0.0'
+}

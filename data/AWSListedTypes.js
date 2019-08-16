@@ -19,8 +19,12 @@
       '#toc > ul > li.awstoc.opened > ul > li.awstoc.opened > ul > li.awstoc'
     )
   )
-  init.forEach(el => el.click())
-  await sleep(500)
+  init.forEach(el => {
+    if (el.classList.contains('closed')) {
+      el.click()
+    }
+  })
+  await sleep(1000)
 
   const opened = Array.from(
     document.querySelectorAll(
@@ -147,6 +151,7 @@ export const AWS_LISTED_TYPES = [
   'AWS::Events::EventBusPolicy',
   'AWS::Events::Rule',
   'AWS::CodeBuild::Project',
+  'AWS::CodeBuild::SourceCredential',
   'AWS::CodeCommit::Repository',
   'AWS::CodeDeploy::Application',
   'AWS::CodeDeploy::DeploymentConfig',
@@ -280,6 +285,7 @@ export const AWS_LISTED_TYPES = [
   'AWS::Glue::DataCatalogEncryptionSettings',
   'AWS::Glue::DevEndpoint',
   'AWS::Glue::Job',
+  'AWS::Glue::MLTransform',
   'AWS::Glue::Partition',
   'AWS::Glue::SecurityConfiguration',
   'AWS::Glue::Table',
@@ -346,6 +352,9 @@ export const AWS_LISTED_TYPES = [
   'AWS::KinesisFirehose::DeliveryStream',
   'AWS::KMS::Alias',
   'AWS::KMS::Key',
+  'AWS::LakeFormation::DataLakeSettings',
+  'AWS::LakeFormation::Permissions',
+  'AWS::LakeFormation::Resource',
   'AWS::Lambda::Alias',
   'AWS::Lambda::EventSourceMapping',
   'AWS::Lambda::Function',
@@ -353,6 +362,8 @@ export const AWS_LISTED_TYPES = [
   'AWS::Lambda::LayerVersionPermission',
   'AWS::Lambda::Permission',
   'AWS::Lambda::Version',
+  'AWS::ManagedBlockchain::Member',
+  'AWS::ManagedBlockchain::Node',
   'AWS::MediaLive::Channel',
   'AWS::MediaLive::Input',
   'AWS::MediaLive::InputSecurityGroup',
