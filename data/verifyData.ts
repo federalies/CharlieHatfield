@@ -186,6 +186,7 @@ const setInterSection = (A: Set<string>, B: Set<string>): string[] => {
     })
 
   if (WITH_PATCH) {
+    console.log({ WITH_PATCH })
     Object.entries(d2)
       .map(([sub, urlRespData]) => {
         const mergedWithPatch = {
@@ -197,11 +198,11 @@ const setInterSection = (A: Set<string>, B: Set<string>): string[] => {
       })
       .map(([sub, urlRespData]) => {
         validatePrinter(sub as string, urlRespData as Specfile)
-        const d = urlRespData as any
-        console.log({
-          d:
-            d.ResourceTypes['AWS::AppSync::GraphQLApi'].Properties.AdditionalAuthenticationProviders
-        })
+        // const d = urlRespData as any
+        // console.log({
+        //   d:
+        //     d.ResourceTypes['AWS::AppSync::GraphQLApi'].Properties.AdditionalAuthenticationProviders
+        // })
       })
   }
   console.log({ WITH_PATCH })

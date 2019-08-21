@@ -267,7 +267,7 @@ describe('SqualFileClass ', () => {
   })
 
   test('__interfaces() for Lambda', () => {
-    const a = new SqualsFile('lambda', 'LambdaFunction', 'AWS::AppSync::GraphQLApi')
+    const a = new SqualsFile('lambda', 'LambdaFunction', 'AWS::Lambda::Function')
     // console.log({'AWS::AppSync::GraphQLApi.Tags': merged.PropertyTypes['AWS::AppSync::GraphQLApi.Tags']})
     const i = a.__interfaces(
       'AWS::AppSync::GraphQLApi',

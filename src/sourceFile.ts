@@ -190,6 +190,7 @@ export class SqualsFile {
          },
          'toJSON':{
             name:'toJSON',
+            returnType:`I${this.Class}_json`,
             returns:` {[this.name]:{ Type:${this.sections._attributes.Type}, Properties: this.Properties }}`
          },
          '_name':{
@@ -448,7 +449,7 @@ export class SqualsFile {
    toString():string{
       return `
       ${this.sections._imports.join('\n')}
-      class ${this.Class} implements ${this.ClassExts.implements.join(', ')} {
+      export class ${this.Class} implements ${this.ClassExts.implements.join(', ')} {
          // #region attributes
          ${this.attibutes_toString(this.sections._attributes)}
          // #endregion attributes
