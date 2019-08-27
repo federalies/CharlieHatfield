@@ -3,6 +3,7 @@
 > Charlie Hatfield is a maker of clouds (well... at least cloud components)
 
 ![banner](./assets/bannerPicExport.jpg)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffederalies%2FCharlieHatfield.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffederalies%2FCharlieHatfield?ref=badge_shield)
 
 [![license](https://img.shields.io/github/license/federalies/CharlieHatfield.svg)](LICENSE) [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme) <!-- ![badge]() ![badge]() -->
 
@@ -157,3 +158,6 @@ PRs accepted.
 ## License
 
 [MIT © Eric Moore.](../LICENSE)
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffederalies%2FCharlieHatfield.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffederalies%2FCharlieHatfield?ref=badge_large)
