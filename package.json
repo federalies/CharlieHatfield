@@ -24,7 +24,7 @@
     "commander": "^2.20.0",
     "get-stdin": "^7.0.0",
     "getopts": "^2.2.5",
-    "lodash-es": "^4.17.15",
+    "lodash-es": "^4.17.21",
     "multihashes": "^0.4.15",
     "node-fetch": "^2.6.0",
     "superstruct": "^0.6.1"
